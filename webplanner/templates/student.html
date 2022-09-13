@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% macro post_button(url, data=None, icon=None, cls=None) %}
+<form action="{{ url }}" method="post" class="form-inline">
+  {% if data %}
+  {% for key, value in data.items() %}
+  <input type="hidden" name="{{ key }}" value="{{ value }}">
+  {% endfor %}
+  {% endif %}
+  <button type="submit" class="btn{% if cls %}{% for c in cls %} btn-{{ c }}{% endfor %}{% endif %}">
+    {% if icon %}
+    <i class="bi bi-{{ icon }}"></i>
+    {% endif %}
+  </button>
+</form>
+{% endmacro %}
+
+
+{% block title %}
+student
+{% endblock %}
+
+{% block content %}
+{% if g.user %}
+<div class="card">
+  <div class="card-header">
+    Vous êtes en ce moment connecté comme <strong>{{ g.user.name_given }} {{ g.user.name_family }}</strong>,
+    mais en utilisant le code <strong>{{ code }}</strong> l'élève <strong>{{student.student_name_given}} {{student.student_name_family}}</strong> vois la page comme motré en dessous:
+  </div>
+  <div class="card-body">
+{% endif%}
+
+<p>Fiche de souhaits de&nbsp;: {{student.student_name_given}} {{student.student_name_family}}</p>
+<p>Ce site te permet de donner tes disponibilités pour ton créneau de cours d'instrument dans la classe de {{student.teacher_name_given}} {{student.teacher_name_family}}.</p>
+<p>
+  Petit rappel: les plages horaires possibles sont:
+  <ul>
+    {% for availability in teacher_availability %}
+    <li>{{dayname[availability.day]}} entre {{availability.time_from}} et {{availability.time_to}}</li>
+    {% endfor %}
+  </ul>
+</p>
+
+<h2>Mes informations&nbsp;:</h2>
+<form class="mb-3" action="{{ url_for('student.set_personal_data', code=code) }}" method="post">
+  <div class="mb-3">
+    <label for="email" class="form-label">E-Mail&nbsp;:</label>
+    <input type="email" class="form-control" id="email" name="email" value="{{ student.student_email or '' }}" required>
+  </div>
+  <div class="mb-3">
+    <label for="phone" class="form-label">Téléphone&nbsp;:</label>
+    <input type="tel" class="form-control" id="phone" name="phone" value="{{ student.student_phone or '' }}" required>
+  </div>
+  <div class="mb-3 form-check">
+    <input class="form-check-input" type="checkbox" value="1" id="priority_family" name="priority_family" {{ "checked" if student.priority_family else "" }}>
+    <label class="form-check-label" for="priority_family">
+      Famille prioritaire (si 3 enfants inscrits au Conservatoire)
+    </label>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <label for="fm_day" class="form-label">Jour de cours de FM</label>
+      <select class="form-select" id="fm_day" name="fm_day" required>
+{% for day in dayname %}
+        <option value="{{ loop.index0 }}" {{ "selected" if student.fm_day == loop.index0 else "" }}>{{day}}</option>
+{% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <label for="fm_time_from" class="form-label">cours de FM à partir de (heure)</label>
+      <input type="time" class="form-control" id="fm_time_from" name="fm_time_from" min="6:00" max="23:00" step="300" value="{{student.fm_time_from}}" required>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <label for="fm_time_to" class="form-label">cours de FM jusqu'à (heure)</label>
+      <input type="time" class="form-control" id="fm_time_to" name="fm_time_to" min="6:00" max="23:00" step="300" value="{{student.fm_time_to}}" required>
+    </div>
+
+  </div>
+
+  <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> enregistrer</button>
+</form>
+
+<h2>Mes disponibilités&nbsp;:</h2>
+{% if student_availability %}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Choix</th>
+      <th>Jour</th>
+      <th>Début</th>
+      <th>Fin</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for availability in student_availability %}
+    {% set p = availability.priority %}
+    <tr>
+      <td>{{ p }}</td>
+      <td>{{ dayname[availability.day] }}</td>
+      <td>{{ availability.time_from }}</td>
+      <td>{{ availability.time_to }}</td>
+      <td>
+        {{ post_button(url=url_for('student.delete_priority', code=code), data={"priority": p}, icon="trash", cls=["sm", "danger"]) }}
+        {% if not loop.last %}
+        {{ post_button(url=url_for('student.swap_priority', code=code), data={"priority1": p, "priority2": p + 1}, icon="arrow-down", cls=["sm", "primary"]) }}
+        {% endif %}
+        {% if not loop.first %}
+        {{ post_button(url=url_for('student.swap_priority', code=code), data={"priority1": p, "priority2": p - 1}, icon="arrow-up", cls=["sm", "primary"]) }}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if student_availability|length >= 2 %}
+<div class="alert alert-info" role="alert">
+  Pour changer les priorités entre les choix, cliquer sur les flèches bleues&nbsp;:
+  <button class="btn btn-primary btn-sm"><i class="bi bi-arrow-down-up"></i></button>
+</div>
+{% endif %}
+<div class="alert alert-info" role="alert">
+  Pour supprimer un choix, cliquer sur la poubelle rouge&nbsp;:
+  <button class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+</div>
+{% endif %}
+{% if student_availability|length < max_student_availability %}
+<div class="alert alert-warning" role="alert">
+  Il est nécessaire d'indiquer {{ max_student_availability }} souhaits de plage horaire différents.
+  Pour l'instant, les souhaits sont incomplets. <!-- {{ student_availability|length }} -->
+</div>
+{% endif %}
+{% if different_days < min_different_days %}
+<div class="alert alert-warning" role="alert">
+  Les possibilités horaires doivent comporter {{ min_different_days }} jours différents.
+  Pour l'instant, ce n'est pas le cas. <!-- {{ different_days }} -->
+</div>
+{% endif %}
+<div class="alert alert-warning" role="alert">
+  Dans la mesure du possible, nous essaierons de tenir compte de votre ordre de préférence.
+</div>
+
+{% if student_availability|length < max_student_availability %}
+<h2>Ajouter une disponibilité&nbsp;:</h2>
+<form class="mb-3" action="{{ url_for('student.add_availability', code=code) }}" method="post">
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <label for="day" class="form-label">Jour</label>
+      <select class="form-select" id="day" name="day" required="">
+{% for day in teacher_availability_days %}
+        <option value="{{day}}">{{dayname[day]}}</option>
+{% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <label for="time_from" class="form-label">à partir de (heure)</label>
+      <input type="time" class="form-control" id="time_from" name="time_from" min="6:00" max="23:00" step="300" required>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <label for="time_to" class="form-label">jusqu'à (heure)</label>
+      <input type="time" class="form-control" id="time_to" name="time_to" min="6:00" max="23:00" step="300" required>
+    </div>
+
+  </div>
+  <button class="btn btn-primary btn-block" type="submit"><i class="bi bi-plus-circle"></i> ajouter</button>
+</form>
+{% else %}
+<div class="alert alert-success" role="alert">Tu as donné tes {{ max_student_availability }} disponibilités. Merci beaucoup!</div>
+{% endif %}
+
+{# closing of the "card" wrapper from above #}
+{% if g.user %}
+  </div>
+</div>
+{% endif%}
+
+{% endblock %}

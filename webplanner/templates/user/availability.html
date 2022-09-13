@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% macro user_availability(availabilities, dayname) %}
+<h2>Mes Disponibilités:</h2>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Jour</th>
+      <th>Début</th>
+      <th>Fin</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for availability in availabilities %}
+    <tr>
+      <td>{{ dayname[availability.day] }}</td>
+      <td>{{ availability.time_from }}</td>
+      <td>{{ availability.time_to }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% block title %}
+user: availability
+{% endblock %}
+
+{% block content %}
+{{ user_availability(availabilities, dayname) }}
+{% endblock %}

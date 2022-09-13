@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% macro response_class(responses) %}
+{% if responses == 0 %}
+text-danger
+{% elif responses >= 3 %}
+text-success
+{% endif %}
+{% endmacro %}
+
+{% macro user_students(students, dayname) %}
+<h2>Mes Élèves:</h2>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Nom de Famille</th>
+      <th>Prénom</th>
+      <th>Durée du Cours</th>
+      <th>Code d'Invitation</th>
+      <th>Réponse</th>
+      <th>Détail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for student in students %}
+    <tr>
+      <td>{{ student.name_family | upper }}</td>
+      <td>{{ student.name_given }}</td>
+      <td>{{ student.lesson_length }}&nbsp;min</td>
+      <td>{{ student.invite_code }}</td>
+      <td class="{{ response_class(student.planning_responses) }}">{{ student.planning_responses }}</td>
+      <td><a class="btn btn-primary btn-sm" href="{{ url_for('student.show', code=student.invite_code) }}"><i class="bi bi-eye"></i></a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% block title %}
+user: availability
+{% endblock %}
+
+{% block content %}
+{{ user_students(students, dayname) }}
+{% endblock %}

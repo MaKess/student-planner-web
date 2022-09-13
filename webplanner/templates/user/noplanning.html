@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% macro user_planning() %}
+<h2>Mon Planning:</h2>
+L'planning n'est pas encore disponible.
+{% endmacro %}
+
+{% block title %}
+user: Planning
+{% endblock %}
+
+{% block content %}
+{{ user_planning() }}
+{% endblock %}

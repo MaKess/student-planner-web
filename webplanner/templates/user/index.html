@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% from 'user/availability.html' import user_availability %}
+{% from 'user/students.html' import user_students %}
+
+{% block title %}
+user
+{% endblock %}
+
+{% block content %}
+<p>Bonjour {{ g.user.name_given }} {{ g.user.name_family }}!</p>
+
+{{ user_availability(availabilities, dayname) }}
+{{ user_students(students, dayname) }}
+
+{% endblock %}

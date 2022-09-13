@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-6 mb-3">
+    <h2>Je suis élève:</h2>
+    <form class="needs-validation" method="post">
+      <div class="mb-3">
+        <label for="address">Code</label>
+        <input type="text" class="form-control" id="code" name="code" placeholder="123-456" required="">
+        <div class="invalid-feedback">
+          Please enter the valid code that you have received from the Conservatory.
+        </div>
+      </div>
+
+      <input type="hidden" name="login" value="student">
+      <button class="btn btn-primary btn-block" type="submit">C'est parti!</button>
+    </form>
+  </div>
+  <div class="col-md-6 mb-3">
+    <h2>Je suis prof:</h2>
+    {% if g.user %}
+    <ul>
+      <li><a href="{{ url_for('user.show') }}">mes disponibilités et élèves</a></li>
+    </ul>
+    {% else %}
+    <form class="needs-validation" method="post">
+      <div class="mb-3">
+        <label for="email">E-Mail</label>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text">@</span>
+          </div>
+          <input type="text" class="form-control" id="email" name="email" placeholder="email" required="">
+          <div class="invalid-feedback" style="width: 100%;">
+            Please enter a valid email address.
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="password">Mot de Passe</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="" required="">
+        <div class="invalid-feedback">
+          Please enter your password.
+        </div>
+      </div>
+
+      <input type="hidden" name="login" value="staff">
+      <button class="btn btn-primary btn-block" type="submit">Login</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+# get the python virtual env tool
+apt install python3-virtualenv
+
+# create a new virtual environment
+virtualenv venv
+
+# use the newly create environment
+. venv/bin/activate
+
+# install "Flask" into the newly created environment
+pip install Flask
+# install "reportlab" for PDF generation
+pip install reportlab
+
+
+# setup the environment
+export FLASK_APP=webplanner
+export FLASK_ENV=development
+
+# initialize the databse
+flask test-db
+
+# run the development server
+flask run --host=0.0.0.0

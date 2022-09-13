@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/calendar.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <title>{% block title %}{% endblock %} - Student planner web</title>
+  </head>
+  <body>
+    {% if g.user %}
+    <nav class="navbar sticky-top navbar-light bg-light mb-3">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index.index') }}">
+          <img src="{{ url_for('static', filename='images/calendar.svg') }}" alt="" width="24" height="24" class="d-inline-block align-text-top">
+          Student planner 2022/2023
+        </a>
+
+        <div class="d-flex">
+          <div class="dropdown me-3">
+            <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+              Information
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+              <li><a class="dropdown-item" href="{{ url_for('user.show') }}">Overview</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('user.students') }}">Mes Élèves</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('user.availability') }}">Mes Disponibilités</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('user.planning_index') }}">Mon Planning</a></li>
+            </ul>
+          </div>
+
+          <form method="post" action="{{ url_for('index.logout') }}">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-power"></i> déconnexion</button>
+          </form>
+        </div>
+
+      </div>
+    </nav>
+    {% endif %}
+
+    <div class="container">
+      {% if not g.user %}
+      <div class="py-5 text-center">
+        <a href="{{ url_for('index.index') }}">
+          <img src="{{ url_for('static', filename='images/calendar.svg') }}" alt="" width="256" height="256" class="d-block mx-auto mb-4">
+        </a>
+        <h1>Student planner 2022/2023</h1>
+        <p class="lead">Un outil rapide et efficace pour organiser le planning de cours!</p>
+      </div>
+      {% endif %}
+      {% for message in get_flashed_messages() %}
+      <div class="alert alert-danger" role="alert">{{ message }}</div>
+      {% endfor %}
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>
