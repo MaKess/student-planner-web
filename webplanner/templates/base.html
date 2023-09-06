@@ -1,3 +1,18 @@
+{% macro post_button(url, data=None, icon=None, cls=None) %}
+<form action="{{ url }}" method="post" class="form-inline">
+  {% if data %}
+  {% for key, value in data.items() %}
+  <input type="hidden" name="{{ key }}" value="{{ value }}">
+  {% endfor %}
+  {% endif %}
+  <button type="submit" class="btn{% if cls %}{% for c in cls %} btn-{{ c }}{% endfor %}{% endif %}">
+    {% if icon %}
+    <i class="bi bi-{{ icon }}"></i>
+    {% endif %}
+  </button>
+</form>
+{% endmacro %}
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -28,7 +43,7 @@
               <li><a class="dropdown-item" href="{{ url_for('user.show') }}">Overview</a></li>
               <li><a class="dropdown-item" href="{{ url_for('user.students') }}">Mes Élèves</a></li>
               <li><a class="dropdown-item" href="{{ url_for('user.availability') }}">Mes Disponibilités</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('user.planning_index') }}">Mon Planning</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('user.planning_index') }}">Mes Plannings</a></li>
             </ul>
           </div>
 

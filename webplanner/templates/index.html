@@ -6,7 +6,7 @@
 {% block content %}
 <div class="row">
   <div class="col-md-6 mb-3">
-    <h2>Je suis élève:</h2>
+    <h2>Je suis élève&nbsp;:</h2>
     <form class="needs-validation" method="post">
       <div class="mb-3">
         <label for="address">Code</label>
@@ -21,7 +21,7 @@
     </form>
   </div>
   <div class="col-md-6 mb-3">
-    <h2>Je suis prof:</h2>
+    <h2>Je suis prof&nbsp;:</h2>
     {% if g.user %}
     <ul>
       <li><a href="{{ url_for('user.show') }}">mes disponibilités et élèves</a></li>

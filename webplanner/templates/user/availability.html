@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
 
-{% macro user_availability(availabilities, dayname) %}
-<h2>Mes Disponibilités:</h2>
+{% macro user_availability(availabilities, dayname, details=False) %}
+<h2>Mes Disponibilités&nbsp;:</h2>
 <table class="table table-striped">
   <thead>
     <tr>
       <th>Jour</th>
       <th>Début</th>
       <th>Fin</th>
+      {% if details %}<th>Actions</th>{% endif %}
     </tr>
   </thead>
   <tbody>
@@ -16,6 +17,7 @@
       <td>{{ dayname[availability.day] }}</td>
       <td>{{ availability.time_from }}</td>
       <td>{{ availability.time_to }}</td>
+      {% if details %}<td>{{ post_button(url=url_for('user.availability_delete'), data={"id": availability.id}, icon="trash", cls=["sm", "danger"]) }}</td>{% endif %}
     </tr>
     {% endfor %}
   </tbody>
@@ -23,9 +25,35 @@
 {% endmacro %}
 
 {% block title %}
-user: availability
+Disponibilités
 {% endblock %}
 
 {% block content %}
-{{ user_availability(availabilities, dayname) }}
+{{ user_availability(availabilities, dayname, True) }}
+
+<h2>Ajouter une disponibilité&nbsp;:</h2>
+<form class="mb-3" action="{{ url_for('user.availability_add') }}" method="post">
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <label for="day" class="form-label">Jour</label>
+      <select class="form-select" id="day" name="day" required="">
+{% for day in dayname %}
+        <option value="{{ loop.index0 }}">{{day}}</option>
+{% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <label for="time_from" class="form-label">à partir de (heure)</label>
+      <input type="time" class="form-control" id="time_from" name="time_from" min="6:00" max="23:00" step="300" required>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <label for="time_to" class="form-label">jusqu'à (heure)</label>
+      <input type="time" class="form-control" id="time_to" name="time_to" min="6:00" max="23:00" step="300" required>
+    </div>
+
+  </div>
+  <button class="btn btn-primary btn-block" type="submit"><i class="bi bi-plus-circle"></i> ajouter</button>
+</form>
 {% endblock %}

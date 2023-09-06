@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Paramètres du planning {{ planning_id }}
+{% endblock %}
+
+{% block content %}
+<p>
+    <a href="{{ url_for('user.planning', planning_id=planning.id) }}"><i class="bi bi-arrow-left"></i> retrouner au planning</a>
+</p>
+
+<h2>Les Paramètres:</h2>
+<form action="{{ url_for('user.planning_settings_save', planning_id=planning.id) }}" method="post">
+    <div class="row mb-3">
+        <div class="col-sm-2"><i class="bi bi-stack"></i> revision</div>
+        <div class="col-sm-10">{{ planning.revision }}</div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-sm-2"><i class="bi bi-list-ol"></i> stage</div>
+        <div class="col-sm-10">
+            {{ planning.stage }}
+            {% if planning.stage == 0 %}
+            (idle)
+            {% elif planning.stage == 1 %}
+            (ready)
+            {% elif planning.stage == 2 %}
+            (working)
+            {% elif planning.stage == 3 %}
+            (success)
+            {% elif planning.stage == 4 %}
+            (failure)
+            {% else %}
+            ???
+            {% endif %}
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-sm-2"><i class="bi bi-clock-history"></i> last update</div>
+        <div class="col-sm-10">{{ planning.last_update }}</div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="range_attempts"><i class="bi bi-calendar3"></i> range_attempts</label>
+        <div class="col-sm-10">
+            <input type="number" class="form-control" id="range_attempts" name="range_attempts" min="1" max="100" value="{{ planning.range_attempts }}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="range_increments"><i class="bi bi-calendar-plus"></i> range_increments</label>
+        <div class="col-sm-10">
+            <input type="number" class="form-control" id="range_increments" name="range_increments" min="1" max="100" value="{{ planning.range_increments }}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="locked"><i class="bi bi-lock"></i> verrouillé</label>
+        <div class="col-sm-10">
+            <input type="checkbox" class="form-check-input" id="locked" name="locked" value="1" {{'checked' if planning.locked else '' }}>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> enregistrer</button>
+</form>
+
+{% endblock %}

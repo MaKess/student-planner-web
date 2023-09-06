@@ -68,6 +68,8 @@ CREATE TABLE scheduling (
     range_attempts INTEGER NOT NULL,
     range_increments INTEGER NOT NULL,
 
+    locked BOOLEAN NOT NULL DEFAULT 0,
+
     stage INTEGER NOT NULL DEFAULT 0,
         -- 0: idle (nothing entered yet, don't bother checking it out)
         -- 1: ready (changes have been entered)

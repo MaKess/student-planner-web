@@ -1,21 +1,5 @@
 {% extends 'base.html' %}
 
-{% macro post_button(url, data=None, icon=None, cls=None) %}
-<form action="{{ url }}" method="post" class="form-inline">
-  {% if data %}
-  {% for key, value in data.items() %}
-  <input type="hidden" name="{{ key }}" value="{{ value }}">
-  {% endfor %}
-  {% endif %}
-  <button type="submit" class="btn{% if cls %}{% for c in cls %} btn-{{ c }}{% endfor %}{% endif %}">
-    {% if icon %}
-    <i class="bi bi-{{ icon }}"></i>
-    {% endif %}
-  </button>
-</form>
-{% endmacro %}
-
-
 {% block title %}
 student
 {% endblock %}

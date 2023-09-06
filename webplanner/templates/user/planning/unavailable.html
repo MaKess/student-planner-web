@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Planning {{ planning_id }}
+{% endblock %}
+
+{% block content %}
+<h2>Mon Planning&nbsp;:</h2>
+<ul>
+    <li><a href="{{ url_for('user.planning_settings', planning_id=planning_id) }}"><i class="bi bi-sliders"></i> modifier les paramètres de ce planning</a></li>
+</ul>
+<p>
+    L'planning n'est pas encore disponible.
+</p>
+{% endblock %}

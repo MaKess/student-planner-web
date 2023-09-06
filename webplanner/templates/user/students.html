@@ -2,14 +2,12 @@
 
 {% macro response_class(responses) %}
 {% if responses == 0 %}
-text-danger
-{% elif responses >= 3 %}
-text-success
-{% endif %}
+text-danger{% elif responses >= 3 %}
+text-success{% endif %}
 {% endmacro %}
 
 {% macro user_students(students, dayname) %}
-<h2>Mes Élèves:</h2>
+<h2>Mes Élèves&nbsp;:</h2>
 <table class="table table-striped">
   <thead>
     <tr>
@@ -37,7 +35,7 @@ text-success
 {% endmacro %}
 
 {% block title %}
-user: availability
+Élèves
 {% endblock %}
 
 {% block content %}

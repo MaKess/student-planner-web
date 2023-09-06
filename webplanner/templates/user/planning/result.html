@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% macro slot_class(priority) %}
+{% if priority is none %}
+secondary{% elif priority <= 1 %}
+success{% elif priority <= 2 %}
+warning{% elif priority >= 3 %}
+danger{% endif %}
+{% endmacro %}
+
+{% block title %}
+Planning {{ planning_id }}
+{% endblock %}
+
+{% block content %}
+{% if not editstart and not altslots %}
+<h2>Autres Plannings&nbsp;:</h2>
+<ul>
+  {% for p in plannings %}
+  <li><a href="{{ url_for('user.planning', planning_id=p.id) }}">attempts={{p.range_attempts}}, increments={{p.range_increments}}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h2>Mon Planning&nbsp;:</h2>
+{% if editstart or altslots %}
+<p>
+  <a class="btn btn-primary" href="{{ url_for('user.planning', planning_id=planning_id) }}"><i class="bi bi-calendar-check"></i> modifications sont terminées</a>
+</p>
+{% else %}
+<ul>
+  <li><a href="{{ url_for('user.planning_export_pdf', planning_id=planning_id) }}"><i class="bi bi-file-pdf"></i> PDF de ce planning à télécharger</a></li>
+  <li><a href="{{ url_for('user.planning_edit', planning_id=planning_id) }}"><i class="bi bi-pencil"></i> modifier ce planning</a></li>
+  <li><a href="{{ url_for('user.planning_settings', planning_id=planning_id) }}"><i class="bi bi-sliders"></i> modifier les paramètres de ce planning</a></li>
+</ul>
+{% endif %}
+
+<table class="table table-striped table-bordered">
+  <thead>
+    <tr>
+      <th></th>
+      {% for d in range(1, 7) %}
+      <th>{{ dayname[d] }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in range(min_slot, max_slot + 1) %}
+    <tr>
+      <td>{{times[s]}}</td>
+      {% for d in range(1, 7) %}
+      {% set slot = slots[d][s] %}
+      {% if slot %}
+      <td rowspan="{{ slot.slots }}" class="table-{{ slot_class(slot.priority) }}">
+        {{ slot.name_given }} {{ slot.name_family | upper }} <br/>
+        ({{ slot.time_from }} - {{ slot.time_to }})
+
+        {% if editstart %}
+        <br/>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('user.planning_edit_student', planning_id=planning_id, student_planning_id=slot.student_planning_id) }}"><i class="bi bi-pen"></i></a>
+        {% endif %}
+      </td>
+      {% elif slot is none %}
+
+      {% if altslots and altslots[d][s] %}
+      {% set altslot = altslots[d][s] %}
+      <td class="table-{{ slot_class(altslot.priority) }}">
+        <form action="{{ url_for('user.planning_place_student', planning_id=planning_id, student_planning_id=altslot.student_planning_id) }}" method="post" class="form-inline">
+          <input type="hidden" name="day" value="{{ d }}">
+          <input type="hidden" name="slot" value="{{ s }}">
+          <input type="hidden" name="length" value="{{ altslot.length_slots }}">
+          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-calendar-check"></i></button>
+        </form>
+      </td>
+      {% else %}
+      <td></td>
+      {% endif %}
+
+      {% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

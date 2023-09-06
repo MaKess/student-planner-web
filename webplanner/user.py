@@ -1,11 +1,34 @@
-from flask import Blueprint, flash, g, redirect, render_template, url_for, send_file
+from crypt import methods
+from math import floor, ceil
+from io import BytesIO
+
+from typing import Optional
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for, send_file
 from webplanner.db import get_db
 from webplanner.index import login_required
 from webplanner.defines import dayname
 from collections import namedtuple
 
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Table
+from reportlab.platypus.paragraph import Paragraph
+
 
 bp = Blueprint('user', __name__, url_prefix='/user')
+
+slot_increment = 10
+days_per_week = 7
+slots_per_day = 24 * 60 // slot_increment
+
+def make_minute_of_day(time_raw: str):
+    hour, minute = time_raw.split(":")
+    return int(hour) * 60 + int(minute)
+
+def make_time_from_minutes(minutes: int):
+    hour, minute = divmod(minutes, 60)
+    return f"{hour:02d}:{minute:02d}"
 
 def get_students():
     return get_db().execute("""
@@ -34,6 +57,7 @@ def get_students():
 def get_teacher_availability():
     return get_db().execute("""
         SELECT
+            id,
             day,
             time_from,
             time_to
@@ -65,7 +89,7 @@ def students():
         dayname=dayname
     )
 
-@bp.route('/availability')
+@bp.route('/availability', methods=("GET",))
 @login_required
 def availability():
     return render_template(
@@ -74,12 +98,97 @@ def availability():
         dayname=dayname
     )
 
+@bp.route('/availability', methods=("POST",))
+@login_required
+def availability_add():
+    db = get_db()
+
+    teacher_id = g.user["id"]
+
+    day = int(request.form['day'])
+    time_from = request.form['time_from']
+    time_to = request.form['time_to']
+
+    overlap = db.execute("""
+        SELECT
+            id,
+            time_from,
+            time_to
+        FROM
+            teacher_availability
+        WHERE
+            teacher_id = ? AND
+            day = ? AND
+            time(time_from) <= time(?) AND
+            time(time_to) >= time(?)
+    """, (teacher_id, day, time_to, time_from)).fetchall()
+
+    if overlap:
+        minutes_from_new = make_minute_of_day(time_from)
+        minutes_to_new = make_minute_of_day(time_to)
+        existing_ids = []
+
+        for existing_id, existing_time_from, existing_time_to in overlap:
+            existing_ids.append(int(existing_id))
+            minutes_from_new = min(minutes_from_new, make_minute_of_day(existing_time_from))
+            minutes_to_new = max(minutes_to_new, make_minute_of_day(existing_time_to))
+
+        reuse_existing_id = existing_ids.pop()
+
+        if existing_ids:
+            db.executemany("DELETE FROM teacher_availability WHERE id = ?", ((i,) for i in existing_ids))
+
+        time_from = make_time_from_minutes(minutes_from_new)
+        time_to = make_time_from_minutes(minutes_to_new)
+
+        db.execute("""
+            UPDATE
+                teacher_availability
+            SET
+                time_from = ?,
+                time_to = ?
+            WHERE
+                id = ?
+        """, (time_from, time_to, reuse_existing_id))
+    else:
+        db.execute("""
+            INSERT INTO
+                teacher_availability
+                (teacher_id, day, time_from, time_to)
+            VALUES
+                (?, ?, ?, ?)
+        """, (teacher_id, day, time_from, time_to))
+
+    db.commit()
+
+    return redirect(url_for(".availability"))
+
+@bp.route('/availability/delete', methods=("POST",))
+@login_required
+def availability_delete():
+    availability_id = int(request.form['id'])
+
+    db = get_db()
+    db.execute("""
+        DELETE FROM
+            teacher_availability
+        WHERE
+            id = ? AND
+            teacher_id = ?
+    """, (availability_id, g.user["id"]))
+    db.commit()
+
+    return redirect(url_for(".availability"))
+
 def get_plannings():
     return get_db().execute("""
         SELECT
             id,
             range_attempts,
-            range_increments
+            range_increments,
+            stage,
+            revision,
+            last_update
         FROM
             scheduling
         WHERE
@@ -96,7 +205,7 @@ def increment_scheduling_revision(db, teacher_id: int):
         revision = revision + 1,
         stage = 1
     WHERE
-        teacher_id = ?
+        teacher_id = ? AND NOT locked
     """, (teacher_id,))
 
 @bp.route('/planning')
@@ -104,11 +213,12 @@ def increment_scheduling_revision(db, teacher_id: int):
 def planning_index():
     plannings = get_plannings()
     first_planning_id = int(plannings[0]["id"])
-    return redirect(url_for("user.planning", planning_id=first_planning_id))
+    return redirect(url_for(".planning", planning_id=first_planning_id))
 
-PlanningSlot = namedtuple("PlanningSlot", ["id", "name_given", "name_family", "day", "time_from", "time_to", "slots"])
+PlanningSlot = namedtuple("PlanningSlot", ["id", "name_given", "name_family", "day", "time_from", "time_to", "slots", "priority", "student_planning_id"])
 
-def make_planning_table(planning_id: int):
+def make_planning_table(planning_id: int, exclude:Optional[int]=None):
+    teacher_id = g.user["id"]
     student_scheduling = get_db().execute("""
         SELECT
             s.id,
@@ -116,39 +226,36 @@ def make_planning_table(planning_id: int):
             s.name_family,
             ss.day,
             ss.time_from,
-            ss.time_to
+            ss.time_to,
+            a.priority,
+            p.id
         FROM
             student_scheduling ss
         JOIN
             student s ON ss.student_id = s.id
         JOIN
-            scheduling x on x.teacher_id = ? AND x.id = ss.scheduling_id AND x.stage = 3
+            scheduling x ON x.teacher_id = ? AND x.id = ss.scheduling_id AND x.stage = 3
+        LEFT JOIN
+            student_planning p ON p.student_id = s.id AND p.teacher_id = ?
+        LEFT JOIN
+            student_availability a ON a.student_planning_id = p.id
+                                  AND ss.day = a.day
+                                  AND time(ss.time_from) BETWEEN time(a.time_from) AND time(a.time_to)
+                                  AND time(ss.time_to) BETWEEN time(a.time_from) AND time(a.time_to)
         WHERE
             ss.scheduling_id = ?
-    """, (g.user["id"], planning_id))
+    """, (teacher_id, teacher_id, planning_id))
 
-    slot_increment = 10
+    slots = [[None for _ in range(slots_per_day)] for _ in range(days_per_week)]
 
     min_slot = None
     max_slot = None
 
-    days_per_week = 7
-    slots_per_day = 24 * 60 // slot_increment
-
-    slots = [[None for _ in range(slots_per_day)] for _ in range(days_per_week)]
-
-    for s_id, name_given, name_family, day, time_from, time_to in student_scheduling:
-        from_hour, from_minute = time_from.split(":")
-        to_hour, to_minute = time_to.split(":")
-
-        from_minute_of_day = int(from_hour) * 60 + int(from_minute)
-        to_minute_of_day = int(to_hour) * 60 + int(to_minute)
-
-
-        from_slot, offset = divmod(from_minute_of_day, slot_increment)
+    for s_id, name_given, name_family, day, time_from, time_to, priority, student_planning_id in student_scheduling:
+        from_slot, offset = divmod(make_minute_of_day(time_from), slot_increment)
         assert offset == 0
 
-        to_slot, offset = divmod(to_minute_of_day, slot_increment)
+        to_slot, offset = divmod(make_minute_of_day(time_to), slot_increment)
         assert offset == 0
 
 
@@ -158,8 +265,11 @@ def make_planning_table(planning_id: int):
         if max_slot is None or to_slot > max_slot:
             max_slot = to_slot
 
+        student_planning_id = int(student_planning_id)
+        if exclude is not None and student_planning_id == exclude:
+            continue
 
-        slots[day][from_slot] = PlanningSlot(s_id, name_given, name_family, day, time_from, time_to, to_slot - from_slot)
+        slots[day][from_slot] = PlanningSlot(s_id, name_given, name_family, day, time_from, time_to, to_slot - from_slot, priority, student_planning_id)
 
         for i in range(from_slot + 1, to_slot):
             slots[day][i] = False
@@ -177,28 +287,22 @@ def planning(planning_id:int):
     slots, min_slot, max_slot, times = make_planning_table(planning_id)
 
     if min_slot is None:
-        return render_template("user/noplanning.html")
+        return render_template("user/planning/unavailable.html")
 
     return render_template(
-        "user/planning.html",
+        "user/planning/result.html",
         planning_id=planning_id,
         plannings=get_plannings(),
         slots=slots,
         min_slot=min_slot,
         max_slot=max_slot,
         times=times,
-        dayname=dayname
+        dayname=dayname,
+        editstart=False,
+        altslots=None
     )
 
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Table
-from reportlab.platypus.paragraph import Paragraph
-
-from io import BytesIO
-
-@bp.route('/planning/<int:planning_id>/pdf')
+@bp.route('/planning/<int:planning_id>.pdf')
 @login_required
 def planning_export_pdf(planning_id:int):
 
@@ -242,8 +346,17 @@ def planning_export_pdf(planning_id:int):
                 b = (d, s - min_slot + slot.slots)
 
                 if slot.slots > 1:
+                    if slot.priority <= 1:
+                        c = colors.lightgreen
+                    elif slot.priority <= 2:
+                        c = colors.lightyellow
+                    elif slot.priority >= 3:
+                        c = colors.pink
+                    else:
+                        c = colors.lightblue
+
                     style.append(("SPAN", a, b))
-                    style.append(("BACKGROUND", a, b, colors.lightblue))
+                    style.append(("BACKGROUND", a, b, c))
 
             else:
                 line.append(None)
@@ -260,6 +373,173 @@ def planning_export_pdf(planning_id:int):
     return send_file(
         fd,
         #as_attachment=True,
-        #download_name=f'planning_{planning_id}.pdf',
+        #attachment_filename=f'planning_{planning_id}.pdf',
         mimetype='application/pdf'
     )
+
+@bp.route('/planning/<int:planning_id>/settings', methods=("GET",))
+@login_required
+def planning_settings(planning_id:int):
+    planning = get_db().execute("""
+        SELECT
+            id,
+            range_attempts,
+            range_increments,
+            locked,
+            stage,
+            revision,
+            last_update
+        FROM
+            scheduling
+        WHERE
+            id = ? AND
+            teacher_id = ?
+    """, (planning_id, g.user["id"])).fetchone()
+
+    return render_template(
+        "user/planning/settings.html",
+        planning=planning,
+    )
+
+@bp.route('/planning/<int:planning_id>/settings', methods=("POST",))
+@login_required
+def planning_settings_save(planning_id:int):
+    db = get_db()
+
+    range_attempts = int(request.form['range_attempts'])
+    range_increments = int(request.form['range_increments'])
+    locked = bool(request.form.get('locked'))
+
+    db.execute("""
+        UPDATE
+            scheduling
+        SET
+            range_attempts = ?,
+            range_increments = ?,
+            locked = ?
+        WHERE
+            id = ? AND
+            teacher_id = ?
+    """, (range_attempts, range_increments, locked, planning_id, g.user["id"]))
+
+    db.commit()
+
+    return redirect(url_for(".planning_settings", planning_id=planning_id))
+
+@bp.route('/planning/<int:planning_id>/edit')
+@login_required
+def planning_edit(planning_id:int):
+    slots, min_slot, max_slot, times = make_planning_table(planning_id)
+
+    if min_slot is None:
+        return render_template("user/planning/unavailable.html")
+
+    return render_template(
+        "user/planning/result.html",
+        planning_id=planning_id,
+        plannings=get_plannings(),
+        slots=slots,
+        min_slot=min_slot,
+        max_slot=max_slot,
+        times=times,
+        dayname=dayname,
+        editstart=True,
+        altslots=None
+    )
+
+AltSlot = namedtuple("AltSlot", ["student_planning_id", "priority", "length_slots"])
+
+def make_altslots(student_planning_id: int, slots):
+    teacher_id = g.user["id"]
+    student_planning = get_db().execute("""
+        SELECT
+            a.priority,
+            a.day,
+            a.time_from,
+            a.time_to,
+            p.lesson_length
+        FROM
+            student_planning p
+        JOIN
+            student_availability a ON a.student_planning_id = p.id
+        WHERE
+            p.id = ? AND
+            p.teacher_id = ?
+    """, (student_planning_id, teacher_id))
+
+    altslots = [[None for _ in range(slots_per_day)] for _ in range(days_per_week)]
+
+    for priority, day, time_from, time_to, lesson_length in student_planning:
+        lesson_length = int(lesson_length)
+        length_slots, offset = divmod(lesson_length, slot_increment)
+        assert offset == 0
+
+        from_slot = ceil(make_minute_of_day(time_from) / slot_increment)
+        to_slot = floor(make_minute_of_day(time_to) / slot_increment)
+
+        for s in range(from_slot, to_slot - length_slots + 1):
+            if not any(slots[day][s + i] for i in range(length_slots)) and (altslots[day][s] is None or altslots[day][s].priority > priority):
+                altslots[day][s] = AltSlot(student_planning_id, priority, length_slots)
+
+    return altslots
+
+@bp.route('/planning/<int:planning_id>/edit/<int:student_planning_id>', methods=("GET",))
+@login_required
+def planning_edit_student(planning_id:int, student_planning_id:int):
+    slots, min_slot, max_slot, times = make_planning_table(planning_id, exclude=student_planning_id)
+
+    if min_slot is None:
+        return render_template("user/unavailable.html")
+
+    return render_template(
+        "user/planning/result.html",
+        planning_id=planning_id,
+        plannings=get_plannings(),
+        slots=slots,
+        min_slot=min_slot,
+        max_slot=max_slot,
+        times=times,
+        dayname=dayname,
+        editstart=False,
+        altslots=make_altslots(student_planning_id, slots)
+    )
+
+@bp.route('/planning/<int:planning_id>/edit/<int:student_planning_id>', methods=("POST",))
+@login_required
+def planning_place_student(planning_id:int, student_planning_id:int):
+    teacher_id = g.user["id"]
+
+    db = get_db()
+
+    day = int(request.form['day'])
+    slot = int(request.form['slot'])
+    length_slots = int(request.form['length'])
+
+    student_id, = get_db().execute("""
+        SELECT
+            student_id
+        FROM
+            student_planning
+        WHERE
+            id = ? AND
+            teacher_id = ?
+    """, (student_planning_id, teacher_id)).fetchone()
+
+    time_from = make_time_from_minutes(slot * slot_increment)
+    time_to = make_time_from_minutes((slot + length_slots) * slot_increment)
+
+    db.execute("""
+        UPDATE
+            student_scheduling
+        SET
+            day = ?,
+            time_from = ?,
+            time_to = ?
+        WHERE
+            scheduling_id = ? AND
+            student_id = ?
+    """, (day, time_from, time_to, planning_id, student_id))
+
+    db.commit()
+
+    return redirect(url_for(".planning_edit", planning_id=planning_id))
