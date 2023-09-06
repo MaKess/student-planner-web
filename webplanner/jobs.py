@@ -122,27 +122,33 @@ def get_job(job_id: int):
 def post_job(job_id: int):
     request_data = request.get_json()
 
-    assert job_id == request_data["options"]["job_id"]
+    request_options = request_data["options"]
 
-    insert_data = []
-    for schedule_data in request_data["schedule"]:
-        student_id = schedule_data["id"]
-        student_name = schedule_data["name"]
-        day = dayname_int[schedule_data["day"]]
-        from_hour = schedule_data["from_hour"]
-        from_minute = schedule_data["from_minute"]
-        to_hour = schedule_data["to_hour"]
-        to_minute = schedule_data["to_minute"]
-
-        insert_data.append((job_id, student_id, day, f"{from_hour:02d}:{from_minute:02d}", f"{to_hour:02d}:{to_minute:02d}"))
+    assert job_id == request_options["job_id"]
 
     cur = get_db().cursor()
     cur.execute("BEGIN")
     old_revision, = cur.execute("SELECT revision FROM scheduling WHERE id = ?", (job_id,)).fetchone()
-    assert int(old_revision) == request_data["options"]["revision"]
+    assert int(old_revision) == request_options["revision"]
     cur.execute("DELETE FROM student_scheduling WHERE scheduling_id = ?", (job_id,))
-    cur.executemany("INSERT INTO student_scheduling (scheduling_id, student_id, day, time_from, time_to) VALUES (?, ?, ?, ?, ?)", insert_data)
-    cur.execute("UPDATE scheduling SET stage = ?, last_update = CURRENT_TIMESTAMP WHERE id = ?", (3, job_id)) # if the calculation failed, the code should be 4 instead of 3
+
+    if request_options["success"]:
+        cur.executemany("INSERT INTO student_scheduling (scheduling_id, student_id, day, time_from, time_to) VALUES (?, ?, ?, ?, ?)",
+            (
+                (
+                    job_id,
+                    schedule_data["id"],
+                    dayname_int[schedule_data["day"]],
+                    f"{schedule_data['from_hour']:02d}:{schedule_data['from_minute']:02d}",
+                    f"{schedule_data['to_hour']:02d}:{schedule_data['to_minute']:02d}"
+                ) for schedule_data in request_data["schedule"]
+            )
+        )
+        new_stage = 3  # success
+    else:
+        new_stage = 4  # failure
+
+    cur.execute("UPDATE scheduling SET stage = ?, last_update = CURRENT_TIMESTAMP WHERE id = ?", (new_stage, job_id))
     cur.execute("COMMIT")
 
     return ""
