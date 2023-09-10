@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'user/planning/list.html' import other_plannings %}
 
 {% macro slot_class(priority) %}
 {% if priority is none %}
@@ -14,12 +15,7 @@ Planning {{ planning_id }}
 
 {% block content %}
 {% if not editstart and not altslots %}
-<h2>Autres Plannings&nbsp;:</h2>
-<ul>
-  {% for p in plannings %}
-  <li><a href="{{ url_for('user.planning', planning_id=p.id) }}">attempts={{p.range_attempts}}, increments={{p.range_increments}}</a></li>
-  {% endfor %}
-</ul>
+{{ other_plannings(plannings) }}
 {% endif %}
 
 <h2>Mon Planning&nbsp;:</h2>

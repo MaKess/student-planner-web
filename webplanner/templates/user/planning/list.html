@@ -1,0 +1,27 @@
+{% macro other_plannings(plannings) %}
+<h2>Autres Plannings&nbsp;:</h2>
+<ul>
+    {% for p in plannings %}
+    <li>
+        <a href="{{ url_for('user.planning', planning_id=p.id) }}">
+            attempts={{p.range_attempts}},
+            increments={{p.range_increments}}
+            {#
+                0: idle (nothing entered yet, don't bother checking it out)
+                1: ready (changes have been entered)
+                2: working (some worker is supposed to number-crunch this)
+                3: success (the result has been uploaded)
+                4: failure (calculating the result was not possible)
+            #}
+            {% if p.stage == 2 %}
+                (en cours de création)
+            {% elif p.stage == 3 %}
+                (création finit)
+            {% elif p.stage == 4 %}
+                (création impossible)
+            {% endif %}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endmacro %}
