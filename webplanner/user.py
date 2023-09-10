@@ -287,7 +287,10 @@ def planning(planning_id:int):
     slots, min_slot, max_slot, times = make_planning_table(planning_id)
 
     if min_slot is None:
-        return render_template("user/planning/unavailable.html")
+        return render_template(
+            "user/planning/unavailable.html",
+            planning_id=planning_id
+        )
 
     return render_template(
         "user/planning/result.html",
@@ -432,7 +435,10 @@ def planning_edit(planning_id:int):
     slots, min_slot, max_slot, times = make_planning_table(planning_id)
 
     if min_slot is None:
-        return render_template("user/planning/unavailable.html")
+        return render_template(
+            "user/planning/unavailable.html",
+            planning_id=planning_id
+        )
 
     return render_template(
         "user/planning/result.html",
@@ -489,7 +495,10 @@ def planning_edit_student(planning_id:int, student_planning_id:int):
     slots, min_slot, max_slot, times = make_planning_table(planning_id, exclude=student_planning_id)
 
     if min_slot is None:
-        return render_template("user/unavailable.html")
+        return render_template(
+            "user/unavailable.html",
+            planning_id=planning_id
+        )
 
     return render_template(
         "user/planning/result.html",
