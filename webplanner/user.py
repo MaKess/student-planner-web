@@ -289,7 +289,8 @@ def planning(planning_id:int):
     if min_slot is None:
         return render_template(
             "user/planning/unavailable.html",
-            planning_id=planning_id
+            planning_id=planning_id,
+            plannings=get_plannings()
         )
 
     return render_template(
@@ -437,7 +438,8 @@ def planning_edit(planning_id:int):
     if min_slot is None:
         return render_template(
             "user/planning/unavailable.html",
-            planning_id=planning_id
+            planning_id=planning_id,
+            plannings=get_plannings()
         )
 
     return render_template(
@@ -497,7 +499,8 @@ def planning_edit_student(planning_id:int, student_planning_id:int):
     if min_slot is None:
         return render_template(
             "user/unavailable.html",
-            planning_id=planning_id
+            planning_id=planning_id,
+            plannings=get_plannings()
         )
 
     return render_template(

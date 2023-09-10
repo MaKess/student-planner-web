@@ -5,6 +5,13 @@ Planning {{ planning_id }}
 {% endblock %}
 
 {% block content %}
+<h2>Autres Plannings&nbsp;:</h2>
+<ul>
+  {% for p in plannings %}
+  <li><a href="{{ url_for('user.planning', planning_id=p.id) }}">attempts={{p.range_attempts}}, increments={{p.range_increments}}</a></li>
+  {% endfor %}
+</ul>
+
 <h2>Mon Planning&nbsp;:</h2>
 <ul>
     <li><a href="{{ url_for('user.planning_settings', planning_id=planning_id) }}"><i class="bi bi-sliders"></i> modifier les paramètres de ce planning</a></li>
