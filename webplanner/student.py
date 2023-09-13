@@ -5,6 +5,16 @@ from webplanner.user import increment_scheduling_revision
 
 bp = Blueprint('student', __name__, url_prefix='/student')
 
+def sanitize_time(t):
+    """
+    reformat the time so that both the hour and minute are shown with two digits.
+    this is required for SQLite. otherwise the comparison function "<", ">", "BETWEEN ... AND" don't work.
+    """
+    h, m, *_ = t.split(":")
+    h = int(h)
+    m = int(m)
+    return f"{h:02d}:{m:02d}"
+
 def get_student(db, code):
     return db.execute("""
         SELECT
@@ -103,8 +113,8 @@ def set_personal_data(code: str):
     phone = request.form['phone']
     priority_family = bool(request.form.get('priority_family'))
     fm_day = int(request.form['fm_day'])
-    fm_time_from = request.form['fm_time_from']
-    fm_time_to = request.form['fm_time_to']
+    fm_time_from = sanitize_time(request.form['fm_time_from'])
+    fm_time_to = sanitize_time(request.form['fm_time_to'])
 
     db.execute("""
         UPDATE
@@ -141,8 +151,8 @@ def add_availability(code: str):
         return redirect(url_for("index.index"))
 
     day = int(request.form['day'])
-    time_from = request.form['time_from']
-    time_to = request.form['time_to']
+    time_from = sanitize_time(request.form['time_from'])
+    time_to = sanitize_time(request.form['time_to'])
 
     # TODO: check that "time_from" to "time_to" is at least the lesson length
 
