@@ -17,7 +17,7 @@ def list_jobs():
         FROM
             scheduling
         WHERE
-            stage = 1
+            stage = 1 AND NOT locked
         ORDER BY
             last_update ASC
     """)])
