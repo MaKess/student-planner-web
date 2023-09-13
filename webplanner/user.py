@@ -306,9 +306,31 @@ def planning(planning_id:int):
         altslots=None
     )
 
+def single_color(_):
+    return colors.lightblue
+
+def prio_to_color(priority):
+    if priority is None:
+        # this should not happen, but it does when the provided student availability was shorter than the lesson length
+        return colors.lightblue
+    elif priority <= 1:
+        return colors.lightgreen
+    elif priority <= 2:
+        return colors.lightyellow
+    elif priority >= 3:
+        return colors.pink
+    else:
+        return colors.lightblue
+
 @bp.route('/planning/<int:planning_id>.pdf')
 @login_required
 def planning_export_pdf(planning_id:int):
+
+    mode = request.args.get("mode")
+    if mode == "single":
+        color_lookup = single_color
+    else:
+        color_lookup = prio_to_color
 
     title = "Planning" # TODO: make this dynamic
 
@@ -350,15 +372,7 @@ def planning_export_pdf(planning_id:int):
                 b = (d, s - min_slot + slot.slots)
 
                 if slot.slots > 1:
-                    if slot.priority <= 1:
-                        c = colors.lightgreen
-                    elif slot.priority <= 2:
-                        c = colors.lightyellow
-                    elif slot.priority >= 3:
-                        c = colors.pink
-                    else:
-                        c = colors.lightblue
-
+                    c = color_lookup(slot.priority)
                     style.append(("SPAN", a, b))
                     style.append(("BACKGROUND", a, b, c))
 
