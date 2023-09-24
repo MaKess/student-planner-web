@@ -274,17 +274,19 @@ def make_planning_table(planning_id: int, exclude:Optional[int]=None):
         for i in range(from_slot + 1, to_slot):
             slots[day][i] = False
 
+    return slots, min_slot, max_slot
+
+def make_times():
     times = []
     for s in range(slots_per_day):
         hour, minute = divmod(s * slot_increment, 60)
         times.append(f"{hour:02d}:{minute:02d}")
-
-    return slots, min_slot, max_slot, times
+    return times
 
 @bp.route('/planning/<int:planning_id>')
 @login_required
 def planning(planning_id:int):
-    slots, min_slot, max_slot, times = make_planning_table(planning_id)
+    slots, min_slot, max_slot = make_planning_table(planning_id)
 
     if min_slot is None:
         return render_template(
@@ -300,7 +302,7 @@ def planning(planning_id:int):
         slots=slots,
         min_slot=min_slot,
         max_slot=max_slot,
-        times=times,
+        times=make_times(),
         dayname=dayname,
         editstart=False,
         altslots=None
@@ -358,7 +360,8 @@ def planning_export_pdf(planning_id:int):
 
     data = [headline]
 
-    slots, min_slot, max_slot, times = make_planning_table(planning_id)
+    slots, min_slot, max_slot = make_planning_table(planning_id)
+    times = make_times()
     for s in range(min_slot, max_slot + 1):
         line = [times[s]] # the first cell is is the time (e.g. "11:30")
 
@@ -447,7 +450,7 @@ def planning_settings_save(planning_id:int):
 @bp.route('/planning/<int:planning_id>/edit')
 @login_required
 def planning_edit(planning_id:int):
-    slots, min_slot, max_slot, times = make_planning_table(planning_id)
+    slots, min_slot, max_slot = make_planning_table(planning_id)
 
     if min_slot is None:
         return render_template(
@@ -463,7 +466,7 @@ def planning_edit(planning_id:int):
         slots=slots,
         min_slot=min_slot,
         max_slot=max_slot,
-        times=times,
+        times=make_times(),
         dayname=dayname,
         editstart=True,
         altslots=None
@@ -508,7 +511,7 @@ def make_altslots(student_planning_id: int, slots):
 @bp.route('/planning/<int:planning_id>/edit/<int:student_planning_id>', methods=("GET",))
 @login_required
 def planning_edit_student(planning_id:int, student_planning_id:int):
-    slots, min_slot, max_slot, times = make_planning_table(planning_id, exclude=student_planning_id)
+    slots, min_slot, max_slot = make_planning_table(planning_id, exclude=student_planning_id)
 
     if min_slot is None:
         return render_template(
@@ -524,7 +527,7 @@ def planning_edit_student(planning_id:int, student_planning_id:int):
         slots=slots,
         min_slot=min_slot,
         max_slot=max_slot,
-        times=times,
+        times=make_times(),
         dayname=dayname,
         editstart=False,
         altslots=make_altslots(student_planning_id, slots)
