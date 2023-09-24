@@ -572,3 +572,70 @@ def planning_place_student(planning_id:int, student_planning_id:int):
     db.commit()
 
     return redirect(url_for(".planning_edit", planning_id=planning_id))
+
+
+HeatmapStudent = namedtuple("HeatmapStudent", ["student_id", "name_given", "name_family", "phone"])
+
+
+@bp.route('/heatmap')
+@login_required
+def heatmap():
+    db = get_db()
+    teacher_id = g.user["id"]
+
+    availability = db.execute("""
+        SELECT
+            s.id AS id,
+            s.name_given AS name_given,
+            s.name_family AS name_family,
+            s.phone AS phone,
+            a.day AS day,
+            a.time_from AS time_from,
+            a.time_to AS time_to
+        FROM
+            student s
+        JOIN
+            student_planning p ON p.student_id = s.id
+        JOIN
+            student_availability a ON a.student_planning_id = p.id
+        WHERE
+            p.teacher_id = ?
+        ORDER BY
+            s.name_family ASC,
+            s.name_given ASC
+    """, (teacher_id,))
+
+    slots = [[[] for _ in range(slots_per_day)] for _ in range(days_per_week)]
+    min_slot = None
+    max_slot = None
+
+    for s_id, s_name_given, s_name_family, s_phone, a_day, a_time_from, a_time_to in availability:
+        from_slot = ceil(make_minute_of_day(a_time_from) / slot_increment)
+        to_slot = floor(make_minute_of_day(a_time_to) / slot_increment)
+
+        for slot in range(from_slot, to_slot):
+            slots[a_day][slot].append(HeatmapStudent(s_id, s_name_given, s_name_family, s_phone))
+
+        if min_slot is None or from_slot < min_slot:
+            min_slot = from_slot
+
+        if max_slot is None or to_slot > max_slot:
+            max_slot = to_slot
+
+    teacher_availability = [[False for _ in range(slots_per_day)] for _ in range(days_per_week)]
+    for ta_id, ta_day, ta_time_from, ta_time_to in get_teacher_availability():
+        from_slot = ceil(make_minute_of_day(ta_time_from) / slot_increment)
+        to_slot = floor(make_minute_of_day(ta_time_to) / slot_increment)
+        for slot in range(from_slot, to_slot):
+            teacher_availability[ta_day][slot] = True
+
+    return render_template(
+        "user/heatmap.html",
+        planning=planning,
+        slots=slots,
+        teacher_availability=teacher_availability,
+        min_slot=min_slot,
+        max_slot=max_slot,
+        times=make_times(),
+        dayname=dayname
+    )
