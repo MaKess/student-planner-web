@@ -1,3 +1,5 @@
 instance
+real-data
 venv
 *.pyc
+webplanner/real_data.sql
