@@ -54,12 +54,12 @@ student
 
     <div class="col-md-4 mb-3">
       <label for="fm_time_from" class="form-label">cours de FM à partir de (heure)</label>
-      <input type="time" class="form-control" id="fm_time_from" name="fm_time_from" min="6:00" max="23:00" step="300" value="{{student.fm_time_from}}" required>
+      <input type="time" class="form-control" id="fm_time_from" name="fm_time_from" min="6:00" max="23:00" step="300" value="{{student.fm_time_from or ''}}" required>
     </div>
 
     <div class="col-md-4 mb-3">
       <label for="fm_time_to" class="form-label">cours de FM jusqu'à (heure)</label>
-      <input type="time" class="form-control" id="fm_time_to" name="fm_time_to" min="6:00" max="23:00" step="300" value="{{student.fm_time_to}}" required>
+      <input type="time" class="form-control" id="fm_time_to" name="fm_time_to" min="6:00" max="23:00" step="300" value="{{student.fm_time_to or ''}}" required>
     </div>
 
   </div>
