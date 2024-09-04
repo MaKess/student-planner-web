@@ -42,6 +42,13 @@ student
     </label>
   </div>
 
+  {% if not student.fm_time_from or not student.fm_time_to %}
+  <div class="col-md-12 mb-3 alert alert-warning" role="alert">
+    Attention votre fiche n'est pas valide tant que le créneau de FM n'est pas renseigné.
+    Ne remplissez vos vœux qu'une fois que vous qvez connaissance du créneau de FM qui vous a été attribué.
+  </div>
+  {% endif %}
+
   <div class="row">
     <div class="col-md-4 mb-3">
       <label for="fm_day" class="form-label">Jour de cours de FM</label>
