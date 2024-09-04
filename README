@@ -15,7 +15,7 @@ pip install reportlab
 
 # setup the environment
 export FLASK_APP=webplanner
-export FLASK_ENV=development
+export FLASK_DEBUG=True
 
 # initialize the databse
 flask test-db
