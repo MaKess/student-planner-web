@@ -21,4 +21,4 @@ dayname_en = [
 ]
 
 dayname = dayname_fr
-dayname_int = {name.upper(): idx for idx, name in enumerate(dayname_en)}
+dayname_int = {k: idx for idx, name in enumerate(dayname_en) for k in (name.upper(), idx)}
