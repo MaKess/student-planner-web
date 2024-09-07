@@ -134,7 +134,7 @@ student
   Dans la mesure du possible, nous essaierons de tenir compte de votre ordre de préférence.
 </div>
 
-{% if student_availability|length < max_student_availability or g.user %}
+{% if student_availability|length < max_student_availability or g.user or True %}
 <h2>Ajouter une disponibilité&nbsp;:</h2>
 <form class="mb-3" action="{{ url_for('student.add_availability', code=code) }}" method="post">
   <div class="row">
