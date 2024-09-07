@@ -157,7 +157,19 @@ def add_availability(code: str):
     time_from = sanitize_time(request.form['time_from'])
     time_to = sanitize_time(request.form['time_to'])
 
-    # TODO: check that "time_from" to "time_to" is at least the lesson length
+    if not time_from or not time_to:
+        flash(f"les heures donné ne sont pas valide")
+        return redirect(url_for("student.show", code=code))
+
+    # check that "time_from" to "time_to" is at least the lesson length
+    hour_from, minute_from = time_from.split(":")
+    hour_to, minute_to = time_to.split(":")
+    minutes_diff = (int(hour_to) * 60 + int(minute_to)) - (int(hour_from) * 60 + int(minute_from))
+    lesson_length = int(student["lesson_length"])
+
+    if minutes_diff < lesson_length:
+        flash(f"le cours dure {lesson_length} minutes, mais la disponibilité que vous avez indiquée n'est que de {minutes_diff} minutes")
+        return redirect(url_for("student.show", code=code))
 
     teacher_id = student["teacher_id"]
 
