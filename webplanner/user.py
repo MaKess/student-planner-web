@@ -3,7 +3,7 @@ from math import floor, ceil
 from io import BytesIO
 
 from typing import Optional
-from flask import Blueprint, flash, g, redirect, render_template, request, url_for, send_file
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for, send_file, jsonify
 from webplanner.db import get_db
 from webplanner.index import login_required
 from webplanner.defines import dayname
@@ -323,6 +323,40 @@ def prio_to_color(priority):
         return colors.pink
     else:
         return colors.lightblue
+
+@bp.route('/planning/<int:planning_id>.json')
+@login_required
+def planning_export_json(planning_id:int):
+    teacher_id = g.user["id"]
+    student_scheduling = get_db().execute("""
+        SELECT
+            s.name_given,
+            s.name_family,
+            s.email,
+            ss.day,
+            ss.time_from,
+            ss.time_to
+        FROM
+            student_scheduling ss
+        JOIN
+            student s ON ss.student_id = s.id
+        JOIN
+            scheduling x ON x.teacher_id = ? AND x.id = ss.scheduling_id AND x.stage = 3
+        WHERE
+            ss.scheduling_id = ?
+    """, (teacher_id, planning_id))
+
+    export_data = []
+    for name_given, name_family, email, day, time_from, time_to in student_scheduling:
+        export_data.append({
+            "name_given": name_given,
+            "name_family": name_family,
+            "email": email,
+            "day": dayname[day],
+            "time_from": time_from,
+            "time_to": time_to,
+        })
+    return jsonify(export_data)
 
 @bp.route('/planning/<int:planning_id>.pdf')
 @login_required
