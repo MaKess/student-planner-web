@@ -25,7 +25,7 @@ Planning {{ planning_id }}
 </p>
 {% else %}
 <ul>
-  <li><a href="{{ url_for('user.planning_export_pdf', planning_id=planning_id) }}"><i class="bi bi-file-pdf"></i> PDF de ce planning à télécharger</a></li>
+  <li><a href="{{ url_for('user.planning_export_pdf', planning_id=planning_id, mode='single') }}"><i class="bi bi-file-pdf"></i> PDF de ce planning à télécharger</a></li>
   <li><a href="{{ url_for('user.planning_edit', planning_id=planning_id) }}"><i class="bi bi-pencil"></i> modifier ce planning</a></li>
   <li><a href="{{ url_for('user.planning_settings', planning_id=planning_id) }}"><i class="bi bi-sliders"></i> modifier les paramètres de ce planning</a></li>
 </ul>
