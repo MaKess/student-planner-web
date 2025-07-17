@@ -334,7 +334,7 @@ def planning_export_pdf(planning_id:int):
     else:
         color_lookup = prio_to_color
 
-    title = "Planning" # TODO: make this dynamic
+    title = f"Planning de {g.user['name_given']} {g.user['name_family']}"
 
     fd = BytesIO()
     doc = SimpleDocTemplate(fd,
