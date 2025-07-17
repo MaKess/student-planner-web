@@ -158,6 +158,12 @@ student
     </div>
 
   </div>
+
+  <div class="alert alert-info" role="alert">
+    Petit rappel&nbsp;:
+    la disponibilité doit être d'au moins {{student.lesson_length}}&nbsp;minutes, mais il est fortement apprécié qu'elle soit plus longue&nbsp;!
+    (dans ce cas, un cours de {{student.lesson_length}}&nbsp;minutes est choisi là où il s'aligne le mieux avec les autres élèves)
+  </div>
   <button class="btn btn-primary btn-block" type="submit"><i class="bi bi-plus-circle"></i> ajouter</button>
 </form>
 {% endif %}
