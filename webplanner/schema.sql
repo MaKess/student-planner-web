@@ -46,7 +46,8 @@ CREATE TABLE student_planning (
     fm_time_to TIME,
     FOREIGN KEY (teacher_id) REFERENCES user (id),
     FOREIGN KEY (student_id) REFERENCES student (id),
-    UNIQUE(student_id, teacher_id)
+    UNIQUE(student_id, teacher_id),
+    UNIQUE(invite_code)
     --, UNIQUE(`priority`, teacher_id)
 );
 
