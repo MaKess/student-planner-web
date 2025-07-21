@@ -20,5 +20,10 @@ export FLASK_DEBUG=True
 # initialize the databse
 flask test-db
 
+# import the real data from "real_data.sql"
+# - "real_data.sql" can be symlink
+# - this also calls "init_db" first, so will recreate the schema from scratch
+flask real-db
+
 # run the development server
 flask run --host=0.0.0.0
