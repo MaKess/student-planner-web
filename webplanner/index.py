@@ -1,4 +1,3 @@
-from crypt import methods
 import functools
 from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
 from webplanner.db import get_db
