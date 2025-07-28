@@ -11,7 +11,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=str(instance_path / 'webplanner.sqlite'),
-        PLANNING_PERIOD="2024/2025",
+        PLANNING_PERIOD="2025/2026",
     )
 
     # TODO: can the Jinja lines below be moved to the configuration?
