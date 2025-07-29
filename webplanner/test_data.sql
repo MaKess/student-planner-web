@@ -83,6 +83,15 @@ INSERT INTO scheduling (
     teacher_id,
     range_attempts,
     range_increments,
+
+    minimize_wishes_prio,
+    minimize_holes,
+    availability_index_scale,
+    lunch_time_from,
+    lunch_time_to,
+    lunch_hole_neg_prio,
+    non_lunch_hole_prio,
+
     stage,
         -- 0: idle (nothing entered yet, don't bother checking it out)
         -- 1: ready (changes have been entered)
@@ -91,5 +100,5 @@ INSERT INTO scheduling (
         -- 4: failure (calculating the result was not possible)
     revision
 ) VALUES
-  (1, 2, 7, 2, 1, 1),
-  (2, 2, 7, 1, 1, 1);
+  (1, 2, 7, 2, TRUE, TRUE, 5, '12:00', '13:00', 10, 150, 1, 1),
+  (2, 2, 7, 1, TRUE, TRUE, 5, '12:00', '13:00', 10, 150, 1, 1);

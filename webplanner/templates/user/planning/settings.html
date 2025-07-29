@@ -38,6 +38,9 @@ Paramètres du planning {{ planning_id }}
         <div class="col-sm-2"><i class="bi bi-clock-history"></i> last update</div>
         <div class="col-sm-10">{{ planning.last_update }}</div>
     </div>
+    <input type="hidden" name="range_attempts" value="{{ planning.range_attempts }}">
+    <input type="hidden" name="range_increments" value="{{ planning.range_increments }}">
+    <!--
     <div class="row mb-3">
         <label class="col-sm-2 col-form-label" for="range_attempts"><i class="bi bi-calendar3"></i> range_attempts</label>
         <div class="col-sm-10">
@@ -50,10 +53,50 @@ Paramètres du planning {{ planning_id }}
             <input type="number" class="form-control" id="range_increments" name="range_increments" min="1" max="100" value="{{ planning.range_increments }}">
         </div>
     </div>
+    -->
     <div class="row mb-3">
         <label class="col-sm-2 col-form-label" for="locked"><i class="bi bi-lock"></i> verrouillé</label>
         <div class="col-sm-10">
             <input type="checkbox" class="form-check-input" id="locked" name="locked" value="1" {{'checked' if planning.locked else '' }}>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="minimize_wishes_prio"><i class="bi bi-calendar-heart"></i> minimize_wishes_prio</label>
+        <div class="col-sm-10">
+            <input type="checkbox" class="form-check-input" id="minimize_wishes_prio" name="minimize_wishes_prio" value="1" {{'checked' if planning.minimize_wishes_prio else '' }}>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="availability_index_scale"><i class="bi bi-bar-chart"></i> availability_index_scale</label>
+        <div class="col-sm-10">
+            <input type="number" class="form-control" id="availability_index_scale" name="availability_index_scale" min="1" max="50" value="{{ planning.availability_index_scale }}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="minimize_holes"><i class="bi bi-calendar-minus"></i> minimize_holes</label>
+        <div class="col-sm-10">
+            <input type="checkbox" class="form-check-input" id="minimize_holes" name="minimize_holes" value="1" {{'checked' if planning.minimize_holes else '' }}>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="non_lunch_hole_prio"><i class="bi bi-calendar-plus"></i> non_lunch_hole_prio</label>
+        <div class="col-sm-10">
+            <input type="number" class="form-control" id="non_lunch_hole_prio" name="non_lunch_hole_prio" min="1" max="250" value="{{ planning.non_lunch_hole_prio }}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="lunch_time_from"><i class="bi bi-fork-knife"></i> lunch time</label>
+        <div class="col-sm-5">
+             <input type="time" class="form-control" id="lunch_time_from" name="lunch_time_from" min="10:00" max="15:00" step="300" value="{{planning.lunch_time_from or ''}}">
+        </div>
+        <div class="col-sm-5">
+            <input type="time" class="form-control" id="lunch_time_to" name="lunch_time_to" min="10:00" max="15:00" step="300" value="{{planning.lunch_time_to or ''}}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="lunch_hole_neg_prio"><i class="bi bi-calendar-plus"></i> lunch_hole_neg_prio</label>
+        <div class="col-sm-10">
+            <input type="number" class="form-control" id="lunch_hole_neg_prio" name="lunch_hole_neg_prio" min="1" max="50" value="{{ planning.lunch_hole_neg_prio }}">
         </div>
     </div>
     <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> enregistrer</button>

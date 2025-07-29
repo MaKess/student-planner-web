@@ -66,8 +66,15 @@ CREATE TABLE student_availability (
 CREATE TABLE scheduling (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     teacher_id INTEGER NOT NULL,
-    range_attempts INTEGER NOT NULL,
-    range_increments INTEGER NOT NULL,
+    range_attempts INTEGER NOT NULL DEFAULT 10,
+    range_increments INTEGER NOT NULL DEFAULT 1,
+    minimize_wishes_prio BOOLEAN NOT NULL DEFAULT TRUE,
+    minimize_holes BOOLEAN NOT NULL DEFAULT TRUE,
+    availability_index_scale INTEGER NOT NULL DEFAULT 5,
+    lunch_time_from TIME NOT NULL DEFAULT '12:00',
+    lunch_time_to TIME NOT NULL DEFAULT '13:00',
+    lunch_hole_neg_prio INTEGER NOT NULL DEFAULT 10,
+    non_lunch_hole_prio INTEGER NOT NULL DEFAULT 150,
 
     locked BOOLEAN NOT NULL DEFAULT 0,
 

@@ -37,11 +37,28 @@ def get_job(job_id: int):
         #if rowcount != 1:
         #    abort(410)  # 410 = Gone: job has already been claimed
 
-    teacher_id, range_attempts, range_increments, revision = db.execute("""
+    (teacher_id,
+    range_attempts,
+    range_increments,
+    minimize_wishes_prio,
+    minimize_holes,
+    availability_index_scale,
+    lunch_time_from,
+    lunch_time_to,
+    lunch_hole_neg_prio,
+    non_lunch_hole_prio,
+    revision) = db.execute("""
         SELECT
             teacher_id,
             range_attempts,
             range_increments,
+            minimize_wishes_prio,
+            minimize_holes,
+            availability_index_scale,
+            lunch_time_from,
+            lunch_time_to,
+            lunch_hole_neg_prio,
+            non_lunch_hole_prio,
             revision
         FROM
             scheduling
@@ -54,6 +71,21 @@ def get_job(job_id: int):
     range_attempts = int(range_attempts)
     range_increments = int(range_increments)
     revision = int(revision)
+
+    minimize_wishes_prio = bool(minimize_wishes_prio)
+    minimize_holes = bool(minimize_holes)
+    availability_index_scale = int(availability_index_scale)
+
+    lunch_time_from_hour, lunch_time_from_minute = lunch_time_from.split(":")
+    lunch_time_from_hour = int(lunch_time_from_hour)
+    lunch_time_from_minute = int(lunch_time_from_minute)
+
+    lunch_time_to_hour, lunch_time_to_minute = lunch_time_to.split(":")
+    lunch_time_to_hour = int(lunch_time_to_hour)
+    lunch_time_to_minute = int(lunch_time_to_minute)
+
+    lunch_hole_neg_prio = int(lunch_hole_neg_prio)
+    non_lunch_hole_prio = int(non_lunch_hole_prio)
 
     availability = db.execute("""
         SELECT
@@ -87,6 +119,15 @@ def get_job(job_id: int):
         "teacher_id": teacher_id,
         "range_attempts": range_attempts,
         "range_increments": range_increments,
+        "minimize_wishes_prio": minimize_wishes_prio,
+        "minimize_holes": minimize_holes,
+        "availability_index_scale": availability_index_scale,
+        "lunch_time_from_hour": lunch_time_from_hour,
+        "lunch_time_from_minute": lunch_time_from_minute,
+        "lunch_time_to_hour": lunch_time_to_hour,
+        "lunch_time_to_minute": lunch_time_to_minute,
+        "lunch_hole_neg_prio": lunch_hole_neg_prio,
+        "non_lunch_hole_prio": non_lunch_hole_prio,
         "revision": revision,
         "student_availabilities": student_availabilities
     }

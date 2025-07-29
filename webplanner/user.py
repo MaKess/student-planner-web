@@ -5,7 +5,7 @@ from typing import Optional
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for, send_file, jsonify
 from webplanner.db import get_db
 from webplanner.index import login_required
-from webplanner.defines import dayname
+from webplanner.defines import dayname, sanitize_time
 from collections import namedtuple
 
 from reportlab.lib import colors
@@ -185,6 +185,13 @@ def get_plannings():
             id,
             range_attempts,
             range_increments,
+            minimize_wishes_prio,
+            minimize_holes,
+            availability_index_scale,
+            lunch_time_from,
+            lunch_time_to,
+            lunch_hole_neg_prio,
+            non_lunch_hole_prio,
             stage,
             revision,
             last_update
@@ -440,6 +447,13 @@ def planning_settings(planning_id:int):
             range_attempts,
             range_increments,
             locked,
+            minimize_wishes_prio,
+            minimize_holes,
+            availability_index_scale,
+            lunch_time_from,
+            lunch_time_to,
+            lunch_hole_neg_prio,
+            non_lunch_hole_prio,
             stage,
             revision,
             last_update
@@ -462,6 +476,13 @@ def planning_settings_save(planning_id:int):
 
     range_attempts = int(request.form['range_attempts'])
     range_increments = int(request.form['range_increments'])
+    minimize_wishes_prio = bool(request.form['minimize_wishes_prio'])
+    minimize_holes = bool(request.form['minimize_holes'])
+    availability_index_scale = int(request.form['availability_index_scale'])
+    lunch_time_from = sanitize_time(request.form['lunch_time_from'])
+    lunch_time_to = sanitize_time(request.form['lunch_time_to'])
+    lunch_hole_neg_prio = int(request.form['lunch_hole_neg_prio'])
+    non_lunch_hole_prio = int(request.form['non_lunch_hole_prio'])
     locked = bool(request.form.get('locked'))
 
     db.execute("""
@@ -470,11 +491,31 @@ def planning_settings_save(planning_id:int):
         SET
             range_attempts = ?,
             range_increments = ?,
+            minimize_wishes_prio = ?,
+            minimize_holes = ?,
+            availability_index_scale = ?,
+            lunch_time_from = ?,
+            lunch_time_to = ?,
+            lunch_hole_neg_prio = ?,
+            non_lunch_hole_prio = ?,
             locked = ?
         WHERE
             id = ? AND
             teacher_id = ?
-    """, (range_attempts, range_increments, locked, planning_id, g.user["id"]))
+    """, (
+        range_attempts,
+        range_increments,
+        minimize_wishes_prio,
+        minimize_holes,
+        availability_index_scale,
+        lunch_time_from,
+        lunch_time_to,
+        lunch_hole_neg_prio,
+        non_lunch_hole_prio,
+        locked,
+        planning_id,
+        g.user["id"]
+    ))
 
     db.commit()
 
