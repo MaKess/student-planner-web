@@ -1,22 +1,10 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from webplanner.db import get_db
-from webplanner.defines import dayname
+from webplanner.defines import dayname, sanitize_time
 from webplanner.user import increment_scheduling_revision
 
 bp = Blueprint('student', __name__, url_prefix='/student')
 
-def sanitize_time(t):
-    """
-    reformat the time so that both the hour and minute are shown with two digits.
-    this is required for SQLite. otherwise the comparison function "<", ">", "BETWEEN ... AND" don't work.
-    """
-    try:
-        h, m, *_ = t.split(":")
-        h = int(h)
-        m = int(m)
-        return f"{h:02d}:{m:02d}"
-    except ValueError:
-        return None
 
 def get_student(db, code):
     return db.execute("""
