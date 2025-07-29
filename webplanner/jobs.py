@@ -10,8 +10,6 @@ def list_jobs():
     return jsonify([dict(row) for row in get_db().execute("""
         SELECT
             id AS job_id,
-            range_attempts,
-            range_increments
             revision
         FROM
             scheduling
