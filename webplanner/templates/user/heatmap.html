@@ -5,6 +5,9 @@ Heatmap
 {% endblock %}
 
 {% block content %}
+{% if min_slot is none or max_slot is none %}
+Aucun vœu d'élève n'a encore été enregistré.
+{% else %}
 <table class="table table-striped table-bordered">
     <thead>
       <tr>
@@ -34,4 +37,5 @@ Heatmap
       {% endfor %}
     </tbody>
   </table>
+{% endif %}
 {% endblock %}
