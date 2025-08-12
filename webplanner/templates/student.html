@@ -119,13 +119,13 @@ student
 </div>
 {% endif %}
 {% if student_availability|length < max_student_availability %}
-<div class="alert alert-warning" role="alert">
+<div class="alert alert-danger" role="alert">
   Il est nécessaire d'indiquer {{ max_student_availability }} souhaits de plage horaire différents.
   Pour l'instant, les souhaits sont incomplets. <!-- {{ student_availability|length }} -->
 </div>
 {% endif %}
 {% if different_days < min_different_days %}
-<div class="alert alert-warning" role="alert">
+<div class="alert alert-danger" role="alert">
   Les possibilités horaires doivent comporter {{ min_different_days }} jours différents.
   Pour l'instant, ce n'est pas le cas. <!-- {{ different_days }} -->
 </div>
